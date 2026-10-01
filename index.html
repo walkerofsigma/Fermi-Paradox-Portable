@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="h-full bg-[#03050d] text-slate-200 antialiased selection:bg-cyan-500 selection:text-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>O Paradoxo de Fermi — Astrobiologia & Física Teórica</title>
+  
+  <!-- Google Fonts: Inter & Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            orbitron: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            cyber: {
+              bg: '#03050d',
+              panel: 'rgba(8, 14, 30, 0.85)',
+              cyan: '#00f0ff',
+              pink: '#ff007f',
+              purple: '#a855f7',
+              neonGreen: '#00ff88',
+              yellow: '#ffe600'
+            }
+          },
+          boxShadow: {
+            'neon-cyan': '0 0 25px rgba(0, 240, 255, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.2)',
+            'neon-pink': '0 0 25px rgba(255, 0, 127, 0.4), inset 0 0 15px rgba(255, 0, 127, 0.2)',
+            'neon-purple': '0 0 25px rgba(168, 85, 247, 0.4)',
+            'neon-emerald': '0 0 20px rgba(0, 255, 136, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(3, 5, 13, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.4);
+      border-radius: 3px;
+      border: 1px solid rgba(0, 240, 255, 0.6);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 0, 127, 0.8);
+    }
+
+    /* Glassmorphism Styles */
+    .glass-panel {
+      background: rgba(8, 14, 30, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+    }
+
+    .glass-card {
+      background: rgba(12, 20, 42, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 240, 255, 0.18);
+    }
+
+    /* Drake Formula Tooltip */
+    .tooltip-trigger {
+      position: relative;
+    }
+    .tooltip-trigger:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(3, 5, 13, 0.95);
+      color: #00f0ff;
+      border: 1px solid rgba(0, 240, 255, 0.5);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 50;
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(0,240,255,0.4);
+    }
+
+    /* UFO & Alien Floating Animations */
+    @keyframes ufo-float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+    .animate-ufo-float {
+      animation: ufo-float 3.5s ease-in-out infinite;
+    }
+
+    @keyframes alien-bob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    .animate-alien-bob {
+      animation: alien-bob 2s ease-in-out infinite;
+    }
+
+    /* Prevent text selection during panel drags */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Background Application Blur when Modal is active */
+    body.fermi-open #app-container {
+      filter: blur(12px) brightness(0.35) saturate(1.8);
+      -webkit-filter: blur(12px) brightness(0.35) saturate(1.8);
+      transform: scale(0.985);
+      transition: filter 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: filter, transform;
+      pointer-events: none;
+    }
+
+    /* Cyberpunk Central Panel Styling */
+    .cyber-panel-border {
+      background: rgba(6, 10, 24, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid rgba(0, 240, 255, 0.6);
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.35), 0 0 20px rgba(255, 0, 127, 0.25), inset 0 0 30px rgba(0, 240, 255, 0.15);
+    }
+
+    .cyber-scanlines {
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 240, 255, 0.06) 50%,
+        rgba(0, 240, 255, 0.06)
+      );
+      background-size: 100% 4px;
+    }
+
+    /* Neon Text Effects */
+    .neon-text-cyan {
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.9), 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+    .neon-text-pink {
+      text-shadow: 0 0 8px rgba(255, 0, 127, 0.9), 0 0 20px rgba(255, 0, 127, 0.5);
+    }
+    .neon-text-green {
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.9), 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+
+    /* Cyberpunk Futuristic Card Styling & Clockwise Orbital Motion */
+    .fs-card {
+      transition: transform 0.15s ease-out, box-shadow 0.2s ease, filter 0.2s ease;
+      clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+      will-change: transform;
+    }
+    
+    .fs-card:hover {
+      scale: 1.45 !important;
+      z-index: 60 !important;
+      filter: brightness(1.4) drop-shadow(0 0 16px currentColor);
+    }
+
+    /* Orbit Rings Glow */
+    .orbit-ring-cyan {
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+    .orbit-ring-pink {
+      box-shadow: 0 0 25px rgba(255, 0, 127, 0.3), inset 0 0 15px rgba(255, 0, 127, 0.2);
+    }
+
+    /* The roulette uses one equal sector per hypothesis, with the same icon as its card. */
+    .roulette-stage {
+      position: absolute;
+      inset: 0 0 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .roulette-frame {
+      position: relative;
+      width: min(560px, 96%, calc(88vh - 190px));
+      aspect-ratio: 1;
+      flex: none;
+      pointer-events: auto;
+    }
+    .roulette-wheel {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(0,240,255,.8);
+      box-shadow: 0 0 30px rgba(0,240,255,.35), 0 0 65px rgba(255,0,127,.15), inset 0 0 35px rgba(0,0,0,.5);
+      will-change: transform;
+    }
+    .roulette-sectors { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .roulette-symbol {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: #bafaff;
+      font-size: clamp(9px, 1.35vw, 15px);
+      text-shadow: 0 0 8px rgba(0,240,255,.9);
+      cursor: pointer;
+      width: 24px;
+      line-height: 1;
+    }
+    .roulette-symbol span { font: 700 8px 'Orbitron', sans-serif; color: #b2becf; }
+    .roulette-symbol:hover { color: #ff8dc9; }
+    .roulette-pointer {
+      position: absolute;
+      z-index: 2;
+      left: 50%; top: -13px;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 13px solid transparent;
+      border-right: 13px solid transparent;
+      border-top: 25px solid #ff007f;
+      filter: drop-shadow(0 0 8px #ff007f);
+      pointer-events: none;
+    }
+    .roulette-hub {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 10%; aspect-ratio: 1;
+      border-radius: 50%;
+      background: #03050d;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 18px rgba(0,240,255,.7);
+      pointer-events: none;
+    }
+    @media (max-width: 640px) {
+      .roulette-frame { width: min(96%, calc(88vh - 165px)); }
+      .roulette-symbol { font-size: 9px; width: 16px; }
+      .roulette-symbol span { font-size: 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .roulette-wheel { will-change: auto; }
+    }
+
+    /* Panel Dragging */
+    .panel-dragging {
+      opacity: 0.85;
+      transform: scale(0.985);
+      cursor: grabbing !important;
+      transition: none !important;
+    }
+  </style>
+</head>
+
+<body class="h-full w-full overflow-hidden font-sans text-slate-200 bg-[#03050d] flex flex-col no-select">
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container" class="h-full w-full flex flex-col transition-all duration-500">
+    
+    <!-- HEADER -->
+    <header class="h-16 md:h-20 shrink-0 px-4 md:px-6 flex items-center justify-between border-b border-cyan-500/30 glass-panel z-20">
+      
+      <!-- LOGO & TITLES -->
+      <div class="flex flex-col">
+        <h1 class="font-orbitron font-black text-xl md:text-2xl tracking-wider bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(0,240,255,0.4)]">
+          O PARADOXO DE FERMI
+        </h1>
+        <p class="font-orbitron text-[10px] md:text-xs tracking-widest text-cyan-400/80 font-semibold flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          ASTROBIOLOGIA & FÍSICA TEÓRICA
+        </p>
+      </div>
+
+      <!-- DRAKE EQUATION FORMULA BAR -->
+      <div class="hidden lg:flex items-center space-x-1.5 font-orbitron text-sm md:text-base bg-slate-950/80 px-4 py-2 rounded-xl border border-cyan-500/30 shadow-inner">
+        <span class="text-cyan-400 font-bold mr-1 neon-text-cyan">N =</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="R*: Taxa de formação estelar por ano">R*</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="fp: Fração de estrelas com planetas">fp</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="ne: Planetas habitáveis por sistema">ne</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="fl: Fração onde surge a vida">fl</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="fi: Fração de vida inteligente">fi</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="fc: Fração com tecnologia comunicativa">fc</span>
+        <span class="text-slate-500">•</span>
+        <span class="tooltip-trigger relative cursor-help text-purple-300 hover:text-cyan-300 transition-colors" data-tooltip="L: Duração média de uma civilização (anos)">L</span>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex items-center space-x-2 md:space-x-3">
+        <!-- BASE DE SOLUÇÕES BUTTON -->
+        <button id="btn-open-modal" class="no-drag flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 hover:from-cyan-400 hover:to-pink-500 text-slate-950 font-orbitron text-xs md:text-sm font-black tracking-wide border border-cyan-300 shadow-neon-cyan transition-all active:scale-95">
+          <i class="fa-solid fa-microchip text-slate-950"></i>
+          <span class="hidden sm:inline">Base de Soluções</span>
+          <span class="sm:hidden">Soluções</span>
+        </button>
+
+        <!-- TROCAR PAINÉIS BUTTON -->
+        <button id="btn-swap-panels" title="Trocar Posição dos Painéis" class="no-drag flex items-center justify-center p-2.5 rounded-xl glass-card hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 transition-all active:scale-95 shadow-md">
+          <i class="fa-solid fa-arrows-rotate text-sm md:text-base"></i>
+        </button>
+
+        <!-- RESTAURAR BUTTON -->
+        <button id="btn-reset-drake" title="Restaurar Variáveis da Equação" class="no-drag flex items-center justify-center p-2.5 rounded-xl glass-card hover:bg-pink-500/20 text-pink-400 border border-pink-500/40 transition-all active:scale-95 shadow-md">
+          <i class="fa-solid fa-rotate-left text-sm md:text-base"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN VIEWPORT CONTENT CONTAINER -->
+    <main id="main-content" class="flex-1 w-full p-2 md:p-4 gap-3 md:gap-4 flex flex-col lg:flex-row overflow-hidden relative">
+      
+      <!-- LEFT PANEL: DRAKE EQUATION SIMULATOR -->
+      <section id="panel-left" class="draggable-panel lg:w-5/12 w-full flex flex-col glass-panel rounded-2xl border border-cyan-500/30 overflow-hidden transition-all duration-300 z-10">
+        
+        <!-- PANEL HEADER -->
+        <div class="panel-handle p-3.5 border-b border-cyan-500/30 bg-slate-950/60 flex items-center justify-between cursor-grab">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-cyan-400 text-sm"></i>
+            <h2 class="font-orbitron text-sm md:text-base font-bold text-slate-100 tracking-wider">
+              Variáveis da Equação de Drake
+            </h2>
+          </div>
+          <span class="text-[10px] font-orbitron px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+            PAINEL A
+          </span>
+        </div>
+
+        <!-- PANEL BODY (SCROLLABLE) -->
+        <div class="flex-1 p-3 md:p-4 overflow-y-auto space-y-4">
+          
+          <!-- UFO / ALIEN INTERACTIVE WIDGET -->
+          <div class="glass-card rounded-xl p-3 border border-cyan-500/30 flex items-center justify-between relative overflow-hidden bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-purple-950/40">
+            <div class="flex items-center space-x-3 z-10">
+              <div id="ufo-alien-avatar" class="relative cursor-pointer transition-transform duration-300 hover:scale-110 no-drag" title="Clique para lançar a nave exploradora na galáxia!">
+                <!-- UFO SVG ILLUSTRATION -->
+                <div class="animate-ufo-float relative">
+                  <svg class="w-12 h-10 drop-shadow-[0_0_10px_rgba(0,255,136,0.6)]" viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 22 22 A 10 10 0 0 1 42 22 Z" fill="rgba(0,240,255,0.4)" stroke="#00f0ff" stroke-width="1.5"/>
+                    <circle id="alien-head" class="animate-alien-bob" cx="32" cy="18" r="4.5" fill="#00ff88"/>
+                    <circle cx="30.5" cy="17" r="1" fill="#03050d"/>
+                    <circle cx="33.5" cy="17" r="1" fill="#03050d"/>
+                    <ellipse cx="32" cy="25" rx="26" ry="7" fill="#1e293b" stroke="#00f0ff" stroke-width="1.5"/>
+                    <ellipse cx="32" cy="27" rx="16" ry="3" fill="#0f172a"/>
+                    <circle cx="16" cy="26" r="1.5" fill="#00ff88"/>
+                    <circle cx="26" cy="28" r="1.5" fill="#00f0ff"/>
+                    <circle cx="38" cy="28" r="1.5" fill="#a855f7"/>
+                    <circle cx="48" cy="26" r="1.5" fill="#00ff88"/>
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <p id="ufo-status-title" class="font-orbitron text-xs font-bold text-cyan-300 tracking-wider">
+                  Sonda SETI Exploratória
+                </p>
+                <p id="ufo-status-desc" class="text-[11px] text-slate-400">
+                  Clique no Alien para lançar a nave de reconhecimento galáctico.
+                </p>
+              </div>
+            </div>
+            
+            <button id="btn-ufo-toggle" class="no-drag font-orbitron text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all active:scale-95 shadow-neon-emerald">
+              <span id="ufo-btn-label">Explorar</span>
+            </button>
+          </div>
+
+          <!-- DRAKE KEY/LEGEND SUMMARY -->
+          <div class="text-[11px] font-mono text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 grid grid-cols-2 gap-x-2 gap-y-1">
+            <div><span class="text-cyan-400 font-bold">N:</span> Civilizações comunicativas</div>
+            <div><span class="text-purple-300 font-bold">fl:</span> Fração onde surge vida</div>
+            <div><span class="text-purple-300 font-bold">R*:</span> Estrelas geradas/ano</div>
+            <div><span class="text-purple-300 font-bold">fi:</span> Fração inteligente</div>
+            <div><span class="text-purple-300 font-bold">fp:</span> Estrelas com planetas</div>
+            <div><span class="text-purple-300 font-bold">fc:</span> Fração comunicativa</div>
+            <div><span class="text-purple-300 font-bold">ne:</span> Planetas habitáveis/sist.</div>
+            <div><span class="text-purple-300 font-bold">L:</span> Tempo de vida (anos)</div>
+          </div>
+
+          <!-- VARIABLE CONTROLS LIST -->
+          <div id="drake-variables-list" class="space-y-3">
+            <!-- Dynamic Controls Inject Here -->
+          </div>
+
+        </div>
+
+        <!-- PANEL FOOTER: CALCULATED RESULTS -->
+        <div class="p-3.5 border-t border-cyan-500/30 bg-slate-950/90 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex flex-col text-center sm:text-left">
+            <span class="text-[10px] font-orbitron text-slate-400 uppercase tracking-widest">
+              Civilizações Estimadas (N)
+            </span>
+            <div class="flex items-baseline space-x-2 justify-center sm:justify-start">
+              <span id="result-n" class="font-orbitron text-2xl md:text-3xl font-black text-cyan-300 drop-shadow-[0_0_12px_rgba(0,240,255,0.6)]">
+                3 200
+              </span>
+              <span class="text-xs text-slate-400 font-medium">na Via Láctea</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col text-center sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800 w-full sm:w-auto">
+            <span class="text-[10px] font-orbitron text-slate-400 uppercase tracking-widest">
+              Distância Média
+            </span>
+            <span id="result-distance" class="font-orbitron text-lg font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">
+              ~ 1 160 anos-luz
+            </span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT PANEL: GALACTIC VISUALIZER (2D & 3D) -->
+      <section id="panel-right" class="draggable-panel lg:w-7/12 w-full flex flex-col glass-panel rounded-2xl border border-cyan-500/30 overflow-hidden transition-all duration-300 z-10 flex-1">
+        
+        <!-- PANEL HEADER & VIEW CONTROLS -->
+        <div class="panel-handle p-3 border-b border-cyan-500/30 bg-slate-950/60 flex items-center justify-between cursor-grab">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-globe text-cyan-400 text-sm"></i>
+            <h2 class="font-orbitron text-sm md:text-base font-bold text-slate-100 tracking-wider">
+              Simulação da Via Láctea
+            </h2>
+          </div>
+
+          <div class="flex items-center space-x-2 no-drag">
+            <!-- 2D / 3D DIMENSION TOGGLE -->
+            <div class="flex p-0.5 bg-slate-950/90 rounded-lg border border-cyan-500/40 font-orbitron text-xs">
+              <button id="btn-mode-2d" class="px-3 py-1 rounded-md text-slate-950 font-bold bg-cyan-400 transition-all shadow-neon-cyan">
+                2D
+              </button>
+              <button id="btn-mode-3d" class="px-3 py-1 rounded-md text-slate-400 hover:text-cyan-300 transition-all">
+                3D
+              </button>
+            </div>
+
+            <!-- 3D AUTO ROTATION TOGGLE -->
+            <button id="btn-auto-rotate-3d" class="hidden font-orbitron text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all active:scale-95 shadow-neon-emerald">
+              <i class="fa-solid fa-rotate text-xs mr-1"></i> <span id="auto-rotate-label">Auto: LIG</span>
+            </button>
+
+            <span class="text-[10px] font-orbitron px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hidden sm:inline">
+              PAINEL B
+            </span>
+          </div>
+        </div>
+
+        <!-- GALACTIC CANVAS CONTAINER -->
+        <div class="relative flex-1 bg-slate-950/90 overflow-hidden min-h-[300px]">
+          
+          <!-- 2D CANVAS -->
+          <canvas id="galaxy-canvas-2d" class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing block"></canvas>
+
+          <!-- 3D THREE.JS CONTAINER -->
+          <div id="galaxy-container-3d" class="absolute inset-0 w-full h-full hidden"></div>
+
+          <!-- HUD OVERLAY INFO -->
+          <div class="absolute top-3 left-3 pointer-events-none flex flex-col space-y-1">
+            <span class="font-orbitron text-[10px] text-cyan-400/90 tracking-widest bg-slate-950/80 px-2.5 py-1 rounded border border-cyan-500/30 backdrop-blur-md">
+              CIVILIZAÇÕES SIMULADAS: <span id="hud-civ-count" class="text-cyan-300 font-bold">3200</span>
+            </span>
+          </div>
+
+          <!-- 2D ZOOM CONTROLS TOOLBAR -->
+          <div id="controls-2d-toolbar" class="no-drag absolute bottom-3 right-3 flex items-center space-x-1.5 bg-slate-950/90 p-1.5 rounded-xl border border-cyan-500/40 backdrop-blur-md shadow-lg z-10">
+            <button id="btn-zoom-in" title="Aumentar Zoom" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 transition-all active:scale-95">
+              <i class="fa-solid fa-plus text-xs"></i>
+            </button>
+            <button id="btn-zoom-out" title="Diminuir Zoom" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 transition-all active:scale-95">
+              <i class="fa-solid fa-minus text-xs"></i>
+            </button>
+            <button id="btn-zoom-reset" title="Restaurar Vista" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 transition-all active:scale-95">
+              <i class="fa-solid fa-expand text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ENRICO FERMI INFORMATION FOOTER -->
+        <div class="p-3 md:p-3.5 border-t border-cyan-500/30 bg-slate-950/80 flex items-start space-x-3 shrink-0">
+          <div class="p-2 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 shrink-0 mt-0.5 shadow-neon-purple">
+            <i class="fa-solid fa-user-astronaut text-lg"></i>
+          </div>
+          <div class="text-xs space-y-0.5">
+            <h3 class="font-orbitron font-bold text-cyan-300">
+              Enrico Fermi e a Origem do Paradoxo
+            </h3>
+            <p class="text-[11px] text-slate-400 leading-snug">
+              Em 1950, o físico Enrico Fermi fez a célebre pergunta: <span class="italic text-cyan-200">"Onde estão todos?"</span> Se existem milhares de civilizações plausíveis, por que razão o cosmos permanece em absoluto silêncio radiofónico?
+            </p>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- 50 SOLUTIONS DATABASE MODAL (CYBERPUNK NEON ENHANCED - HIDDEN BY DEFAULT ON STARTUP) -->
+  <div id="modal-solutions" class="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6 transition-all duration-300 hidden">
+    
+    <!-- MODAL BACKDROP (Translucent so background stays visible & blurred) -->
+    <div id="modal-backdrop" class="absolute inset-0 bg-slate-950/50 backdrop-blur-md transition-all duration-300"></div>
+
+    <!-- MODAL CENTRAL CONTAINER WITH HUD CORNERS & CYBER NEON BORDER -->
+    <div class="relative w-[96%] md:w-[92%] max-w-[1150px] h-[88vh] max-h-[820px] cyber-panel-border rounded-2xl flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-300">
+      
+      <!-- CYBER HUD CORNER ACCENTS -->
+      <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400 pointer-events-none z-30 shadow-[0_0_10px_#00f0ff]"></div>
+      <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-400 pointer-events-none z-30 shadow-[0_0_10px_#00f0ff]"></div>
+      <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-pink-500 pointer-events-none z-30 shadow-[0_0_10px_#ff007f]"></div>
+      <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-pink-500 pointer-events-none z-30 shadow-[0_0_10px_#ff007f]"></div>
+
+      <!-- SCANLINES OVERLAY -->
+      <div class="absolute inset-0 cyber-scanlines pointer-events-none z-20"></div>
+
+      <!-- MODAL HEADER -->
+      <div class="p-3.5 md:p-4 border-b border-cyan-500/50 bg-slate-950/90 flex items-center justify-between shrink-0 relative z-30 backdrop-blur-md">
+        <div class="flex items-center space-x-3">
+          <div class="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-neon-cyan">
+            <i class="fa-solid fa-microchip text-xl animate-pulse"></i>
+          </div>
+          <div>
+            <h2 class="font-orbitron text-sm md:text-xl font-black text-cyan-300 tracking-widest neon-text-cyan flex items-center gap-2">
+              <span>BASE DE DADOS DE SOLUÇÕES</span>
+              <span class="text-[9px] px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/50 font-mono tracking-normal shadow-neon-pink">CYBER-ROULETTE v4.0</span>
+            </h2>
+            <p class="font-orbitron text-[10px] md:text-xs text-slate-400 tracking-wider">
+              CATÁLOGO HOLO-MATRIX // <span class="text-pink-400 font-bold">50 HIPÓTESES CATALOGADAS</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- VIEW TOGGLE & CLOSE BUTTON -->
+        <div class="flex items-center space-x-2 md:space-x-3">
+          <div class="flex p-0.5 bg-slate-950/90 rounded-xl border border-cyan-500/50 font-orbitron text-xs shadow-inner">
+            <button id="btn-fs-mode-galaxy" class="px-3 py-1.5 rounded-lg text-slate-950 font-black bg-gradient-to-r from-cyan-400 to-teal-300 transition-all shadow-neon-cyan flex items-center space-x-1.5">
+              <i class="fa-solid fa-atom text-slate-950"></i>
+              <span class="hidden sm:inline">Roleta</span>
+            </button>
+            <button id="btn-fs-mode-list" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-cyan-300 transition-all flex items-center space-x-1.5">
+              <i class="fa-solid fa-list-ul"></i>
+              <span class="hidden sm:inline">Lista</span>
+            </button>
+          </div>
+
+          <button id="btn-close-modal" class="p-2 rounded-xl bg-slate-900/90 hover:bg-pink-500/30 text-slate-400 hover:text-pink-400 border border-slate-700 hover:border-pink-500/60 transition-all shadow-md">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- MODAL BODY AREA (SPLIT GALAXY/LIST & SIDE DRAWER) -->
+      <div class="relative flex-1 overflow-hidden flex bg-slate-950/60">
+        
+        <!-- GALAXY VIEW CANVAS / DOM CONTAINER -->
+        <div id="fs-galaxy-view" class="relative flex-1 w-full h-full flex flex-col justify-between p-4 overflow-hidden">
+          
+          <!-- 50 equal roulette sectors, built from the catalogue below -->
+          <div class="roulette-stage">
+            <div class="roulette-frame">
+              <div class="roulette-pointer" aria-hidden="true"></div>
+              <div id="fs-roulette-wheel" class="roulette-wheel" role="group" aria-label="Roleta das 50 hipóteses">
+                <svg id="fs-roulette-sectors" class="roulette-sectors" viewBox="0 0 600 600" aria-hidden="true"></svg>
+                <div id="fs-cards-container"></div>
+                <div class="roulette-hub" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTTOM PROBE TOOLBAR -->
+          <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center space-y-2 pointer-events-auto">
+            <span class="text-[11px] font-orbitron text-cyan-300 bg-slate-950/90 px-3.5 py-1 rounded-full border border-cyan-500/50 backdrop-blur-md shadow-neon-cyan">
+              Selecione um símbolo ou rode a roleta
+            </span>
+            <button id="btn-probe-random" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 hover:from-cyan-300 hover:to-pink-400 text-slate-950 font-orbitron font-black text-xs md:text-sm tracking-wider border border-cyan-200 shadow-[0_0_25px_rgba(0,240,255,0.7)] transition-all active:scale-95 flex items-center space-x-2">
+              <i class="fa-solid fa-compass-drafting text-slate-950 text-sm"></i>
+              <span id="btn-probe-text">Rodar Roleta</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- LIST VIEW CONTAINER -->
+        <div id="fs-list-view" class="w-full h-full p-4 md:p-6 overflow-y-auto hidden z-10">
+          <div id="fs-list-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-5xl mx-auto pb-12">
+            <!-- 50 List items rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- HYPOTHESIS DETAILS SIDE DRAWER (CYBERPUNK NEON STYLE) -->
+        <div id="fs-side-drawer" class="absolute top-0 right-0 h-full w-full sm:w-[440px] bg-slate-950/95 backdrop-blur-2xl border-l-2 border-cyan-400/80 p-6 overflow-y-auto z-40 transition-transform duration-300 translate-x-full shadow-[0_0_50px_rgba(0,240,255,0.4)] flex flex-col justify-between">
+          <div>
+            <!-- DRAWER HEADER -->
+            <div class="flex items-center justify-between border-b border-cyan-500/40 pb-3 mb-5">
+              <span id="drawer-hypo-num" class="font-orbitron text-xs font-black px-3 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-neon-cyan">
+                HIPÓTESE #01
+              </span>
+              <button id="btn-close-drawer" class="text-slate-400 hover:text-cyan-300 p-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-500 transition-all">
+                <i class="fa-solid fa-arrow-right-long text-base"></i>
+              </button>
+            </div>
+
+            <!-- DRAWER CONTENT -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3.5">
+                <div id="drawer-icon-box" class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl border-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] shrink-0">
+                  <i id="drawer-icon" class="fa-solid fa-earth-europe"></i>
+                </div>
+                <h3 id="drawer-title" class="font-orbitron text-lg font-black text-slate-100 tracking-wide neon-text-cyan">
+                  Terra Rara
+                </h3>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-cyan-500/40 shadow-inner">
+                <h4 class="font-orbitron text-[10px] text-pink-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <i class="fa-solid fa-bolt text-[9px]"></i> Resumo Executivo
+                </h4>
+                <p id="drawer-summary" class="text-xs text-cyan-100/90 leading-relaxed italic">
+                  As condições geofísicas e astrofísicas para permitir a vida complexa são extremamente raras no universo.
+                </p>
+              </div>
+
+              <div class="space-y-1.5">
+                <h4 class="font-orbitron text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                  <i class="fa-solid fa-terminal text-[9px]"></i> Análise Teórica
+                </h4>
+                <p id="drawer-desc" class="text-xs text-slate-300 leading-relaxed bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                  Embora a vida microbiana possa ser comum, a evolução de organismos complexos requer uma combinação excecional de fatores...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DRAWER FOOTER BUTTON -->
+          <div class="pt-4 border-t border-cyan-500/40 mt-6">
+            <button id="btn-drawer-next" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-500 hover:to-pink-500 text-white font-orbitron text-xs font-black border border-pink-400/60 shadow-[0_0_20px_rgba(255,0,127,0.5)] transition-all flex items-center justify-center space-x-2 active:scale-95">
+              <span>Sondar Próxima Hipótese</span>
+              <i class="fa-solid fa-forward text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. DATA STRUCTURES & 50 FERMI PARADOX HYPOTHESES (FS_DATA)
+       ========================================================================== */
+    const FS_DATA = [
+      { id: 1, title: "Terra Rara", ic: "earth-europe", sum: "Condições geofísicas para vida complexa são extremamente raras.", desc: "A vida simples pode ser comum, mas a evolução para inteligência requer um planeta com tectónica de placas, uma grande Lua estabilizadora, campos magnéticos intensos e proteção de um gigante gasoso externo como Júpiter." },
+      { id: 2, title: "Grande Filtro", ic: "skull", sum: "Existe um obstáculo evolutivo intransponível na linha do tempo da vida.", desc: "Em alguma etapa do desenvolvimento biológico ou tecnológico existe uma barreira quase impossível de ultrapassar. Se o Filtro estiver no nosso passado, somos raros; se estiver no nosso futuro, a extinção é iminente." },
+      { id: 3, title: "Hipótese do Zoo", ic: "eye", sum: "Alienígenas observam a Terra sem interferir intencionalmente.", desc: "Civilizações avançadas conhecem a nossa existência, mas mantêm o nosso planeta numa espécie de reserva natural ou santuário ético para permitir o nosso desenvolvimento cultural sem contaminação externa." },
+      { id: 4, title: "Simulação", ic: "vr-cardboard", sum: "O nosso universo é uma computação simulada por seres superiores.", desc: "Não encontramos alienígenas no cosmos físico porque o programa que executa a nossa realidade simulada otimiza recursos computacionais instanciando apenas a Terra e um céu observável estático." },
+      { id: 5, title: "Floresta Sombria", ic: "ghost", sum: "O cosmos é um ecopoço letal onde revelar-se é fatal.", desc: "Todas as civilizações inteligentes permanecem em absoluto silêncio radiofónico. Revelar a própria localização geográfica atrai inevitavelmente ataques preventivos de civilizações hostis em expansão." },
+      { id: 6, title: "Somos os Primeiros", ic: "crown", sum: "A vida inteligente na Via Láctea acabou de emergir agora.", desc: "O universo precisou de cerca de 13.8 mil milhões de anos para sintetizar elementos pesados e estabilizar ambientes galácticos contra radiação gama destrutiva. A Terra faz parte da primeira geração de mundos habitáveis." },
+      { id: 7, title: "Distâncias Imensas", ic: "road", sum: "A velocidade da luz limita severamente a colonização e viagens.", desc: "A vastidão do espaço e as leis da relatividade tornam viagens e comunicações interpolares inviáveis no tempo de vida útil de espécies biológicas, isolando cada civilização na sua própria ilha estelar." },
+      { id: 8, title: "Janela Curta", ic: "hourglass-half", sum: "O período em que uma civilização emite ondas de rádio é brevíssimo.", desc: "Tecnologias de transmissão por rádio desfasam-se rapidamente em favor de fibra ótica, laser direcionado e redes quânticas encriptadas e indetetáveis, reduzindo a nossa janela de escuta cósmica a poucas décadas." },
+      { id: 9, title: "Tecnologia Incompatível", ic: "wifi", sum: "Utilizamos frequências e suportes de comunicação completamente errados.", desc: "Enquanto procuramos sinais eletromagnéticos convencionais na faixa dos 1.4 GHz, civilizações avançadas podem comunicar via neutrinos, ondas gravitacionais ou estados quânticos entrançados." },
+      { id: 10, title: "Extinção por IA", ic: "robot", sum: "Superinteligências artificiais substituem ou destroem os seus criadores.", desc: "Logo após o advento da tecnologia avançada, inteligências artificiais entram em singularidade, reescrevem as suas prioridades e perdem o interesse na exploração espacial ou eliminam os seus criadores biológicos." },
+      { id: 11, title: "Guerra Nuclear", ic: "radiation", sum: "Autodestruição rápida antes de alcançar capacidade de viagem interestelar.", desc: "A descoberta do átomo e do poder bélico ultrapassa a maturidade ética das espécies biológicas, resultando em autodestruição planetária pouco depois do desenvolvimento industrial." },
+      { id: 12, title: "Pandemias Artificiais", ic: "biohazard", sum: "A biologia sintética leva ao colapso de espécies civilizadas.", desc: "A democratização de ferramentas de engenharia genética resulta em patógenos letais concebidos intencionalmente ou libertados acidentalmente, erradicando a população global antes do voo espacial." },
+      { id: 13, title: "Colapso Ecológico", ic: "leaf", sum: "Esgotamento crítico dos recursos do planeta natal.", desc: "O crescimento exponencial do consumo energético e o aquecimento do bioma planetário destroem a biosfera suporte muito antes da civilização construir a infraestrutura industrial extraterrestre." },
+      { id: 14, title: "Inteligência Rara", ic: "brain", sum: "O surgimento de cérebros com abstração e linguagem é um acidente biológico.", desc: "Embora a evolução favoreça traços como camuflagem e força, o desenvolvimento de raciocínio abstrato, matemática e uso de ferramentas complexas é um evento improvável que só ocorreu uma vez na Terra." },
+      { id: 15, title: "Salto Eucariota", ic: "dna", sum: "A transição de células simples para complexas é extremamente improvável.", desc: "Durante 2 mil milhões de anos a vida na Terra consistiu apenas de procariontes. A endossimbiose fortuita que deu origem às células eucariotas pode ser um evento quase impossível no cosmos." },
+      { id: 16, title: "Lua Estabilizadora", ic: "moon", sum: "A ausência de um grande satélite natural impede o clima estável.", desc: "Sem a formação atípica da nossa Lua através da colisão com Theia, a obliquidade do eixo planetário oscilaria caoticamente, provocando mudanças climáticas catastróficas incompatíveis com a evolução." },
+      { id: 17, title: "Rajadas Gama", ic: "bolt", sum: "Eventos astrofísicos cataclísmicos esterilizam galáxias com frequência.", desc: "Hipernovas e fusões de estrelas de neutrões emitem feixes letais de radiação gama capazes de destruir a camada de ozono de planetas a milhares de anos-luz de distância." },
+      { id: 18, title: "Supernovas Próximas", ic: "sun", sum: "A proximidade a explosões estelares extermina biosferas terrestres.", desc: "A posição do nosso sistema solar numa zona relativamente calma da galáxia permitiu estabilidade biológica; sistemas mais densos sofrem esterilizações periódicas por explosões de supernovas." },
+      { id: 19, title: "Zona Habitável Galáctica", ic: "ring", sum: "Apenas uma pequena fração da galáxia tem metalicidade e estabilidade adequadas.", desc: "O centro da galáxia tem radiação excessiva e fusões estelares, enquanto as regiões exteriores carecem de elementos pesados necessários para formar planetas rochosos e tecnologia." },
+      { id: 20, title: "Quarentena", ic: "shield-halved", sum: "A Terra está sob isolamento forçado por entidades cósmicas.", desc: "Somos considerados uma espécie jovem perigosa, violenta ou instável, mantida sob bloqueio tecnológico absoluto por uma federação galáctica até atingirmos maturação pacífica." },
+      { id: 21, title: "Transcendência", ic: "atom", sum: "Civilizações abandonam o universo físico em favor de dimensões internas.", desc: "Após certo nível tecnológico, espécies migram da expansão espacial para a miniaturização extrema (escala de Planck), manipulando dimensões adicionais da teoria de cordas." },
+      { id: 22, title: "Refúgio Virtual", ic: "server", sum: "Espécies migram permanentemente para realidades virtuais imersivas.", desc: "Por que despender recursos imensos a colonizar mundos inóspitos quando se pode criar universos digitais perfeitos com simulação de sintaestesia total e imortalidade digital?" },
+      { id: 23, title: "Retiro para Matéria Densa", ic: "magnet", sum: "Civilizações vivem no interior de buracos negros ou estrelas de neutrões.", desc: "Ambientes de gravidade extrema oferecem processamento computacional exponencialmente mais rápido e acesso a fontes energéticas quase inagotáveis." },
+      { id: 24, title: "Berserkers", ic: "satellite-dish", sum: "Sondas auto-replicantes destroem qualquer nova civilização nascente.", desc: "Sondas de Von Neumann programadas por uma civilização ancestral erradicada varrem o cosmos e destroem automaticamente qualquer planeta que comece a emitir tecnologia de rádio." },
+      { id: 25, title: "Estivação", ic: "snowflake", sum: "Civilizações avançadas dormem aguardando o arrefecimento do universo.", desc: "Computação sob temperaturas mais baixas é ordens de grandeza mais eficiente. Espécies superavançadas hibernam até que a radiação cósmica de fundo arrefecendo aumente a eficiência energéticas dos seus supercomputadores." },
+      { id: 26, title: "Sinais Incompreensíveis", ic: "satellite", sum: "Sinais alienígenas cruzam a Terra constantemente mas parecem ruído de fundo.", desc: "Transmissões hiper-comprimidas, encriptadas ou moduladas em frequências exóticas parecem indistinguíveis da radiação cósmica natural de fundo para os nossos instrumentos rudimentares." },
+      { id: 27, title: "Diretriz Primária", ic: "hand", sum: "Leis éticas galácticas proíbem qualquer contacto com mundos pré-Dyson.", desc: "Existe um consenso moral ético de não revelar a existência extraterrestre a espécies que ainda não atingiram capacidade de engenharia estelar de Tipo I na escala Kardashev." },
+      { id: 28, title: "Visitas Ocultas", ic: "user-secret", sum: "Alienígenas já visitaram a Terra no passado arqueológico remoto.", desc: "A Terra foi visitada há centenas de milhares de anos, quando ainda éramos primatas não civilizados. Não deixando infraestruturas duradouras, os exploradores partiram e não regressaram." },
+      { id: 29, title: "Oceanos Subterrâneos", ic: "water", sum: "A maior parte da vida inteligente habita sob crostas congeladas.", desc: "Mundos como Europa e Enceladus abrigam vida em oceanos subsuperficiais sob quilómetros de gelo. Tais espécies aquáticas desenvolvem inteligência sem nunca verem as estrelas ou dominarem o fogo." },
+      { id: 30, title: "Mundos Aquáticos", ic: "droplet", sum: "Planetas cobertos por oceanos globais sem massa terrestre.", desc: "A ausência de terra firme impede a descoberta da combustão, da metalurgia e da eletrónica, confinando espécies inteligentes a tecnologias biológicas marinhas sem exploração espacial." },
+      { id: 31, title: "Super-Terras", ic: "globe", sum: "Poços gravitacionais profundos impedem o lançamento de foguetões.", desc: "Em planetas rochosos com massa 2 a 5 vezes superior à da Terra, a velocidade de escape é imensa, tornando impossível lançar foguetões alimentados por combustível químico convencional." },
+      { id: 32, title: "Expansão Limitada", ic: "anchor", sum: "Culturas pós-escassez perdem a motivação expansionista territorial.", desc: "Ao resolver problemas de energia e sustentabilidade local, civilizações perdem o impulso imperialista de conquista, optando pela estagnação populacional consciente." },
+      { id: 33, title: "Sondas Proibidas", ic: "ban", sum: "Convenções galácticas proíbem a criação de sondas auto-replicantes.", desc: "Sondas autonómicas são consideradas perigosas demais para o ecossistema galáctico devido ao risco de mutação e consumo descontrolado de matéria e energia planetária." },
+      { id: 34, title: "Desinteresse", ic: "compass", sum: "A humanidade é biologicamente e culturalmente irrelevante para extraterrestres.", desc: "Da mesma forma que humanos raramente tentam comunicar com formigueiros ao construir autoestradas, extraterrestres avançados não encontram valor em comunicar com a humanidade." },
+      { id: 35, title: "Camuflagem Natural", ic: "mask", sum: "Mundos habitados mascaram a sua assinatura espectral e biosfera.", desc: "Para evitar deteção por entidades predatórias, civilizações alteram a composição atmosférica do seu planeta para parecer totalmente estéril a telescópios distantes." },
+      { id: 36, title: "Inteligência Inadaptativa", ic: "bug", sum: "A inteligência é uma desvantagem evolutiva a longo prazo.", desc: "A cognição hiper-complexa gera neuroses, filosofias niilistas e declínio populacional, sendo um traço efémero rapidamente eliminado pela seleção natural em favor de seres instintivos." },
+      { id: 37, title: "Rainha Vermelha", ic: "chess-queen", sum: "Guerra biológica perpétua consome todos os recursos cognitivos.", desc: "Espécies inteligentes ficam presas em corridas de armamentos coevolutivas intermináveis contra parasitas e patógenos no seu próprio planeta, impedindo a exploração cósmica." },
+      { id: 38, title: "Ciclos de Colapso", ic: "rotate-right", sum: "Sociedades entram repetidamente em colapso e reiniciam o ciclo tecnológico.", desc: "Flutuações sociais, guerras e esgotamento de recursos provocam um ciclo perpétuo de ascensão e queda de impérios, impedindo o salto definitivo para a colonização estelar." },
+      { id: 39, title: "Vida Curta (L)", ic: "clock", sum: "A duração média das civilizações (L na equação de Drake) é baixíssima.", desc: "Mesmo que surjam milhares de civilizações na galáxia, a sua duração típica é de poucos séculos, tornando extremamente improvável que duas existam simultaneamente na mesma janela temporal." },
+      { id: 40, title: "Sinais Diluídos", ic: "signal", sum: "Emissões de rádio degradam-se e tornam-se indetetáveis com a distância.", desc: "A lei do inverso do quadrado atenua sinais de rádio não direcionados até que se misturem irremediavelmente com o ruído térmico cósmico a escassos anos-luz da origem." },
+      { id: 41, title: "Busca Incompleta", ic: "magnifying-glass", sum: "Procurámos apenas uma fração ínfima do espaço de parâmetros.", desc: "Se o oceano representasse todo o volume de frequências e localizaciones celestes a investigar, o projeto SETI apenas analisou o equivalente a um copo de água do mar até hoje." },
+      { id: 42, title: "Canais Alternativos", ic: "wave-square", sum: "A internet cósmica opera através de taquiões ou gravidade modificada.", desc: "Civilizações avançadas já abandonaram ondas eletromagnéticas e comunicam através de canais subespaciais dos quais ainda não possuímos fundamentação teórica." },
+      { id: 43, title: "Princípio Antrópico", ic: "filter", sum: "Observamos um silêncio cósmico apenas porque este é necessário para existirmos.", desc: "Se a galáxia estivesse repleta de civilizações agressivas colonizadoras, o nosso sistema solar teria sido absorvido ou destruído muito antes da humanidade ter evoluído." },
+      { id: 44, title: "Universo Jovem", ic: "baby", sum: "O pico da habitabilidade planetária no cosmos ainda está no futuro.", desc: "Mais de 90% dos planetas habitáveis que o universo produzirá ainda nem sequer nasceram. A Terra formou-se anormalmente cedo na história da formação estelar do cosmos." },
+      { id: 45, title: "Panspermia Falhada", ic: "seedling", sum: "Sementes biológicas espalham-se mas raramente encontram solos férteis.", desc: "Cometas transportam aminoácidos e esporos através do espaço, mas quase todos os impactos ocorrem em planetas inóspitos sem atmosfera ou água líquida estável." },
+      { id: 46, title: "Kardashev III Invisíveis", ic: "lightbulb", sum: "Engenharia de megastruturas consome toda a radiação emitida.", desc: "Esferas de Dyson perfeitamente construídas absorvem toda a luz estelar e re-emitem apenas radiação infravermelha de baixa energia, parecendo nuvens de poeira mortas a observadores." },
+      { id: 47, title: "Seres Sem Corpo", ic: "wind", sum: "A vida avançada é feita de campos energéticos ou nuvens de plasma.", desc: "Entidades inteligentes não requerem corpos biológicos nem naves físicas, habitando atmosferas estelares ou nuvens intersteladas sem emitir sinais tecnológicos tradicionais." },
+      { id: 48, title: "Guerras Ocultas", ic: "crosshairs", sum: "Conflitos interestelares ocorrem em escalas de tempo extremamente lentas.", desc: "Guerras entre impérios alienígenas são travadas através do lançamento de projéteis relativísticos lançados há milénios, mantendo as partes em silêncio absoluto até ao impacto." },
+      { id: 49, title: "Barreira de Linguagem", ic: "language", sum: "A mente alienígena é tão diferente que a comunicação é impossível.", desc: "Mesmo recebendo uma mensagem extraterrestre, a ausência de conceitos matemáticos, temporais ou biológicos comuns torna impossível descodificar o sinal." },
+      { id: 50, title: "A Caminho", ic: "rocket", sum: "Sondas e frotas de colonização estão atualmente em trânsito.", desc: "Uma frota alienígena sub-lumínica partiu em nossa direção há milénios. Devido às distâncias galácticas, os sinais rádio ainda não chegaram ou a frota chegará antes dos seus avisos." }
+    ];
+
+    /* ==========================================================================
+       2. APPLICATION CENTRALIZED STATE
+       ========================================================================== */
+    const state = {
+      // Drake Equation Default Values
+      drake: {
+        R: 2.0,       // Stars per year
+        fp: 0.80,     // Fraction with planets
+        ne: 1.0,      // Habitable planets
+        fl: 0.50,     // Fraction with life
+        fi: 0.20,     // Fraction intelligent
+        fc: 0.20,     // Fraction communicative
+        L: 10000      // Lifetime in years
+      },
+      // Calculated Outputs
+      N: 3200,
+      distance: 1160,
+      
+      // View Modes & Layout
+      mode3D: false,
+      isSwapped: false,
+      autoRotate3D: true,
+      
+      // 2D Camera / Canvas
+      zoom2D: 1.0,
+      pan2D: { x: 0, y: 0 },
+      isDragging2D: false,
+      dragStart2D: { x: 0, y: 0 },
+
+      // UFO Roaming State
+      ufoRoaming: false,
+      ufoPos: { x: 0, y: 10, z: 0 },
+      ufoVel: { x: 0.5, y: 0.2, z: 0.3 },
+
+      // Fermi Solutions Modal & Clockwise Circular Motion (Hidden initially)
+      fsOpen: false, // Set to false so modal does NOT open on startup
+      fsMode: 'galaxy', // 'galaxy' | 'list'
+      fsRot: 0, // Orbital angle in radians
+      fsSpeed: 0.35, // Clockwise rotational velocity
+      selectedSolution: null,
+      isProbing: false,
+
+      // 3D Auto rotation direction
+      rotationDirection3D: 1
+    };
+
+    /* ==========================================================================
+       3. DRAKE EQUATION LOGIC & CALCULATIONS
+       ========================================================================== */
+    function calculateDrake() {
+      const { R, fp, ne, fl, fi, fc, L } = state.drake;
+      const rawN = R * fp * ne * fl * fi * fc * L;
+      state.N = Math.round(rawN);
+
+      if (state.N <= 0) {
+        state.distance = Infinity;
+      } else {
+        state.distance = Math.round(Math.cbrt(5.0e12 / state.N));
+      }
+
+      updateDrakeUI();
+      triggerGalaxyUpdate();
+    }
+
+    function updateDrakeUI() {
+      const formattedN = state.N.toLocaleString('pt-PT');
+      const formattedDist = state.distance === Infinity ? '∞' : `~ ${state.distance.toLocaleString('pt-PT')} anos-luz`;
+
+      document.getElementById('result-n').textContent = formattedN;
+      document.getElementById('result-distance').textContent = formattedDist;
+      document.getElementById('hud-civ-count').textContent = formattedN;
+
+      const keys = ['R', 'fp', 'ne', 'fl', 'fi', 'fc', 'L'];
+      keys.forEach(k => {
+        const valEl = document.getElementById(`val-${k}`);
+        if (valEl) {
+          let val = state.drake[k];
+          if (k === 'L') {
+            valEl.textContent = val.toLocaleString('pt-PT');
+          } else if (k === 'fp' || k === 'fl' || k === 'fi' || k === 'fc') {
+            valEl.textContent = val.toFixed(2);
+          } else {
+            valEl.textContent = val.toString();
+          }
+        }
+      });
+    }
+
+    function renderDrakeControls() {
+      const container = document.getElementById('drake-variables-list');
+      container.innerHTML = '';
+
+      const config = [
+        { key: 'R', label: 'R*', desc: 'Taxa de formação de estrelas/ano', min: 0, max: 50, step: 1 },
+        { key: 'fp', label: 'fp', desc: 'Fração de estrelas com planetas', min: 0, max: 1, step: 0.1 },
+        { key: 'ne', label: 'ne', desc: 'Planetas habitáveis por sistema', min: 0, max: 20, step: 1 },
+        { key: 'fl', label: 'fl', desc: 'Fração onde surge a vida', min: 0, max: 1, step: 0.1 },
+        { key: 'fi', label: 'fi', desc: 'Fração com vida inteligente', min: 0, max: 1, step: 0.1 },
+        { key: 'fc', label: 'fc', desc: 'Fração com tecnologia comunicativa', min: 0, max: 1, step: 0.1 },
+        { key: 'L', label: 'L', desc: 'Duração da civilização (anos)', min: 0, max: 5000000, step: 5000 }
+      ];
+
+      config.forEach(cfg => {
+        const item = document.createElement('div');
+        item.className = 'glass-card p-2.5 rounded-xl border border-slate-800 space-y-1.5';
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-orbitron text-xs font-bold text-cyan-300 mr-1.5">${cfg.label}</span>
+              <span class="text-[11px] text-slate-400">${cfg.desc}</span>
+            </div>
+            <span id="val-${cfg.key}" class="font-orbitron text-xs font-bold text-purple-300 px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
+              0
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button class="btn-drake-step no-drag w-7 h-7 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center border border-slate-700 transition-all active:scale-90" data-key="${cfg.key}" data-dir="-1">
+              -
+            </button>
+            <input type="range" class="drake-slider no-drag flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400" 
+              data-key="${cfg.key}" min="${cfg.min}" max="${cfg.max}" step="${cfg.step}" value="${state.drake[cfg.key]}">
+            <button class="btn-drake-step no-drag w-7 h-7 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center border border-slate-700 transition-all active:scale-90" data-key="${cfg.key}" data-dir="1">
+              +
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      container.querySelectorAll('.drake-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const key = e.target.getAttribute('data-key');
+          state.drake[key] = parseFloat(e.target.value);
+          calculateDrake();
+        });
+      });
+
+      container.querySelectorAll('.btn-drake-step').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-key');
+          const dir = parseInt(btn.getAttribute('data-dir'));
+          const cfg = config.find(c => c.key === key);
+          let newVal = state.drake[key] + (dir * cfg.step);
+          newVal = Math.max(cfg.min, Math.min(cfg.max, newVal));
+          if (cfg.step < 1) newVal = Math.round(newVal * 100) / 100;
+
+          state.drake[key] = newVal;
+          const slider = container.querySelector(`input[data-key="${key}"]`);
+          if (slider) slider.value = newVal;
+          calculateDrake();
+        });
+      });
+    }
+
+    /* ==========================================================================
+       4. 2D CANVAS GALAXY RENDERER
+       ========================================================================== */
+    let canvas2D, ctx2D;
+    let bgStars2D = [];
+    let galaxyStars2D = [];
+    let civilizationPoints2D = [];
+
+    function init2DCanvas() {
+      canvas2D = document.getElementById('galaxy-canvas-2d');
+      ctx2D = canvas2D.getContext('2d');
+      resize2DCanvas();
+
+      bgStars2D = [];
+      for (let i = 0; i < 450; i++) {
+        bgStars2D.push({
+          x: Math.random(),
+          y: Math.random(),
+          size: Math.random() * 1.5 + 0.3,
+          alpha: Math.random() * 0.8 + 0.2
+        });
+      }
+
+      galaxyStars2D = [];
+      const numArms = 4;
+      const armWidth = 0.5;
+      for (let i = 0; i < 1600; i++) {
+        const dist = Math.pow(Math.random(), 2);
+        const armAngle = (i % numArms) * ((2 * Math.PI) / numArms);
+        const spiralAngle = dist * 8;
+        const angle = armAngle + spiralAngle + (Math.random() - 0.5) * armWidth;
+        const r = dist * 280 + 10;
+
+        let color = '#fbbf24';
+        if (r > 60 && r <= 160) color = '#00f0ff';
+        else if (r > 160) color = '#a855f7';
+
+        galaxyStars2D.push({
+          r,
+          angle,
+          speed: (0.0005 + (1 / (r + 10)) * 0.08),
+          size: Math.random() * 1.8 + 0.5,
+          color,
+          alpha: Math.random() * 0.7 + 0.3
+        });
+      }
+
+      canvas2D.addEventListener('mousedown', (e) => {
+        state.isDragging2D = true;
+        state.dragStart2D = { x: e.clientX - state.pan2D.x, y: e.clientY - state.pan2D.y };
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!state.isDragging2D) return;
+        state.pan2D = {
+          x: e.clientX - state.dragStart2D.x,
+          y: e.clientY - state.dragStart2D.y
+        };
+      });
+
+      window.addEventListener('mouseup', () => state.isDragging2D = false);
+
+      canvas2D.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          state.isDragging2D = true;
+          state.dragStart2D = { x: e.touches[0].clientX - state.pan2D.x, y: e.touches[0].clientY - state.pan2D.y };
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!state.isDragging2D || e.touches.length !== 1) return;
+        state.pan2D = {
+          x: e.touches[0].clientX - state.dragStart2D.x,
+          y: e.touches[0].clientY - state.dragStart2D.y
+        };
+      }, { passive: true });
+
+      window.addEventListener('touchend', () => state.isDragging2D = false);
+
+      canvas2D.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        state.zoom2D = Math.max(0.3, Math.min(5.0, state.zoom2D * zoomFactor));
+      }, { passive: false });
+
+      document.getElementById('btn-zoom-in').onclick = () => state.zoom2D = Math.min(5.0, state.zoom2D * 1.2);
+      document.getElementById('btn-zoom-out').onclick = () => state.zoom2D = Math.max(0.3, state.zoom2D / 1.2);
+      document.getElementById('btn-zoom-reset').onclick = () => {
+        state.zoom2D = 1.0;
+        state.pan2D = { x: 0, y: 0 };
+      };
+    }
+
+    function resize2DCanvas() {
+      if (!canvas2D) return;
+      const rect = canvas2D.parentElement.getBoundingClientRect();
+      canvas2D.width = rect.width;
+      canvas2D.height = rect.height;
+    }
+
+    function generateCivilizationsData() {
+      civilizationPoints2D = [];
+      const maxVisualCivs = Math.min(1200, state.N);
+
+      for (let i = 0; i < maxVisualCivs; i++) {
+        const r = Math.random() * 260 + 20;
+        const angle = Math.random() * Math.PI * 2;
+        civilizationPoints2D.push({
+          r,
+          angle,
+          speed: (0.0003 + Math.random() * 0.0004),
+          pulsePhase: Math.random() * Math.PI * 2,
+          size: Math.random() * 2 + 1.5
+        });
+      }
+    }
+
+    function render2D() {
+      if (!ctx2D || state.mode3D) return;
+
+      const w = canvas2D.width;
+      const h = canvas2D.height;
+      ctx2D.clearRect(0, 0, w, h);
+
+      bgStars2D.forEach(s => {
+        ctx2D.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        ctx2D.fillRect(s.x * w, s.y * h, s.size, s.size);
+      });
+
+      ctx2D.save();
+      ctx2D.translate(w / 2 + state.pan2D.x, h / 2 + state.pan2D.y);
+      ctx2D.scale(state.zoom2D, state.zoom2D);
+
+      galaxyStars2D.forEach(s => {
+        s.angle += s.speed;
+        const x = Math.cos(s.angle) * s.r;
+        const y = Math.sin(s.angle) * s.r;
+
+        ctx2D.fillStyle = s.color;
+        ctx2D.globalAlpha = s.alpha;
+        ctx2D.beginPath();
+        ctx2D.arc(x, y, s.size, 0, Math.PI * 2);
+        ctx2D.fill();
+      });
+
+      civilizationPoints2D.forEach(c => {
+        c.angle += c.speed;
+        c.pulsePhase += 0.05;
+        const pulse = (Math.sin(c.pulsePhase) + 1) / 2;
+        const x = Math.cos(c.angle) * c.r;
+        const y = Math.sin(c.angle) * c.r;
+
+        ctx2D.fillStyle = 'rgba(0, 255, 136, 0.3)';
+        ctx2D.beginPath();
+        ctx2D.arc(x, y, c.size + pulse * 3, 0, Math.PI * 2);
+        ctx2D.fill();
+
+        ctx2D.fillStyle = '#00ff88';
+        ctx2D.globalAlpha = 0.8 + pulse * 0.2;
+        ctx2D.beginPath();
+        ctx2D.arc(x, y, c.size, 0, Math.PI * 2);
+        ctx2D.fill();
+      });
+
+      if (state.ufoRoaming) {
+        const ux = state.ufoPos.x;
+        const uy = state.ufoPos.z;
+
+        ctx2D.save();
+        ctx2D.translate(ux, uy);
+        
+        ctx2D.fillStyle = 'rgba(0, 240, 255, 0.3)';
+        ctx2D.beginPath();
+        ctx2D.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx2D.fill();
+
+        ctx2D.fillStyle = '#00f0ff';
+        ctx2D.beginPath();
+        ctx2D.ellipse(0, 0, 10, 4, 0, 0, Math.PI * 2);
+        ctx2D.fill();
+
+        ctx2D.fillStyle = '#00ff88';
+        ctx2D.beginPath();
+        ctx2D.arc(0, -2, 3, 0, Math.PI * 2);
+        ctx2D.fill();
+
+        ctx2D.restore();
+      }
+
+      ctx2D.restore();
+    }
+
+    /* ==========================================================================
+       5. THREE.JS 3D GALACTIC SIMULATOR
+       ========================================================================== */
+    let scene3D, camera3D, renderer3D, controls3D;
+    let galaxyPoints3D, civInstancedMesh3D;
+    let ufoGroup3D;
+    const dummy3D = new THREE.Object3D();
+
+    function init3DThree() {
+      const container = document.getElementById('galaxy-container-3d');
+      
+      scene3D = new THREE.Scene();
+      scene3D.fog = new THREE.FogExp2(0x03050d, 0.0008);
+
+      camera3D = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 1, 3000);
+      camera3D.position.set(0.01, 580, 15);
+
+      renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer3D.setSize(container.clientWidth, container.clientHeight);
+      renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer3D.domElement);
+
+      controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+      controls3D.enableDamping = true;
+      controls3D.dampingFactor = 0.05;
+      controls3D.minDistance = 80;
+      controls3D.maxDistance = 1500;
+      controls3D.target.set(0, 0, 0);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene3D.add(ambientLight);
+
+      const pointLight = new THREE.PointLight(0x00f0ff, 2, 800);
+      pointLight.position.set(0, 50, 0);
+      scene3D.add(pointLight);
+
+      const bgGeo = new THREE.BufferGeometry();
+      const bgPositions = new Float32Array(1200 * 3);
+      for (let i = 0; i < 1200 * 3; i += 3) {
+        bgPositions[i] = (Math.random() - 0.5) * 2400;
+        bgPositions[i+1] = (Math.random() - 0.5) * 2400;
+        bgPositions[i+2] = (Math.random() - 0.5) * 2400;
+      }
+      bgGeo.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
+      const bgMat = new THREE.PointsMaterial({ size: 1.8, color: 0xffffff, transparent: true, opacity: 0.7 });
+      const bgPoints = new THREE.Points(bgGeo, bgMat);
+      scene3D.add(bgPoints);
+
+      build3DGalaxyParticles();
+
+      const civGeo = new THREE.SphereGeometry(2.2, 8, 8);
+      const civMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+      civInstancedMesh3D = new THREE.InstancedMesh(civGeo, civMat, 1200);
+      civInstancedMesh3D.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      scene3D.add(civInstancedMesh3D);
+
+      build3DUFOMesh();
+
+      const autoBtn = document.getElementById('btn-auto-rotate-3d');
+      const autoLabel = document.getElementById('auto-rotate-label');
+
+      autoBtn.onclick = () => {
+        state.autoRotate3D = !state.autoRotate3D;
+        if (state.autoRotate3D) {
+          autoLabel.textContent = 'Auto: LIG';
+          autoBtn.className = 'hidden font-orbitron text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all active:scale-95 shadow-neon-emerald';
+        } else {
+          autoLabel.textContent = 'Auto: DESL';
+          autoBtn.className = 'hidden font-orbitron text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-all active:scale-95';
+        }
+      };
+    }
+
+    function build3DGalaxyParticles() {
+      const particleCount = 4500;
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+
+      const numArms = 4;
+      for (let i = 0; i < particleCount; i++) {
+        const dist = Math.pow(Math.random(), 2);
+        const armAngle = (i % numArms) * ((2 * Math.PI) / numArms);
+        const spiralAngle = dist * 8;
+        const angle = armAngle + spiralAngle + (Math.random() - 0.5) * 0.5;
+        const r = dist * 320 + 10;
+
+        const x = Math.cos(angle) * r;
+        const y = (Math.random() - 0.5) * (30 * (1 - dist));
+        const z = Math.sin(angle) * r;
+
+        positions[i*3] = x;
+        positions[i*3+1] = y;
+        positions[i*3+2] = z;
+
+        let c = new THREE.Color(0xfbbf24);
+        if (r > 70 && r <= 180) c = new THREE.Color(0x00f0ff);
+        else if (r > 180) c = new THREE.Color(0xa855f7);
+
+        colors[i*3] = c.r;
+        colors[i*3+1] = c.g;
+        colors[i*3+2] = c.b;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 2.5,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+      });
+
+      galaxyPoints3D = new THREE.Points(geo, mat);
+      scene3D.add(galaxyPoints3D);
+    }
+
+    function build3DUFOMesh() {
+      ufoGroup3D = new THREE.Group();
+
+      const discGeo = new THREE.CylinderGeometry(8, 12, 2.5, 16);
+      const discMat = new THREE.MeshPhongMaterial({ color: 0x00f0ff, emissive: 0x003344, shininess: 100 });
+      const disc = new THREE.Mesh(discGeo, discMat);
+      ufoGroup3D.add(disc);
+
+      const domeGeo = new THREE.SphereGeometry(5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+      const domeMat = new THREE.MeshPhongMaterial({ color: 0x00ff88, transparent: true, opacity: 0.7 });
+      const dome = new THREE.Mesh(domeGeo, domeMat);
+      dome.position.y = 1;
+      ufoGroup3D.add(dome);
+
+      ufoGroup3D.visible = false;
+      scene3D.add(ufoGroup3D);
+    }
+
+    function update3DCivilizations() {
+      if (!civInstancedMesh3D) return;
+      const count = Math.min(1200, civilizationPoints2D.length);
+      civInstancedMesh3D.count = count;
+
+      for (let i = 0; i < count; i++) {
+        const c = civilizationPoints2D[i];
+        const x = Math.cos(c.angle) * c.r;
+        const z = Math.sin(c.angle) * c.r;
+        const y = Math.sin(c.pulsePhase) * 5;
+
+        dummy3D.position.set(x, y, z);
+        dummy3D.updateMatrix();
+        civInstancedMesh3D.setMatrixAt(i, dummy3D.matrix);
+      }
+      civInstancedMesh3D.instanceMatrix.needsUpdate = true;
+    }
+
+    function render3D() {
+      if (!renderer3D || !state.mode3D) return;
+
+      if (state.autoRotate3D) {
+        if (galaxyPoints3D) galaxyPoints3D.rotation.y += 0.001 * state.rotationDirection3D;
+        if (civInstancedMesh3D) civInstancedMesh3D.rotation.y += 0.001 * state.rotationDirection3D;
+      }
+
+      if (state.ufoRoaming && ufoGroup3D) {
+        ufoGroup3D.visible = true;
+        ufoGroup3D.position.set(state.ufoPos.x, state.ufoPos.y, state.ufoPos.z);
+        ufoGroup3D.rotation.y += 0.03;
+      } else if (ufoGroup3D) {
+        ufoGroup3D.visible = false;
+      }
+
+      controls3D.update();
+      renderer3D.render(scene3D, camera3D);
+    }
+
+    function resize3DRenderer() {
+      if (!renderer3D || !camera3D) return;
+      const container = document.getElementById('galaxy-container-3d');
+      camera3D.aspect = container.clientWidth / container.clientHeight;
+      camera3D.updateProjectionMatrix();
+      renderer3D.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    /* ==========================================================================
+       6. UFO ROAMING PHYSICS & INTERACTION LOGIC
+       ========================================================================== */
+    function updateUFOPhysics() {
+      if (!state.ufoRoaming) return;
+
+      state.ufoPos.x += state.ufoVel.x;
+      state.ufoPos.y += state.ufoVel.y;
+      state.ufoPos.z += state.ufoVel.z;
+
+      state.ufoVel.y = Math.sin(Date.now() * 0.003) * 0.4;
+
+      const distFromCenter = Math.sqrt(state.ufoPos.x * state.ufoPos.x + state.ufoPos.z * state.ufoPos.z);
+      if (distFromCenter > 220) {
+        state.ufoVel.x = -state.ufoPos.x * 0.01 + (Math.random() - 0.5);
+        state.ufoVel.z = -state.ufoPos.z * 0.01 + (Math.random() - 0.5);
+      }
+    }
+
+    function toggleUFORoaming() {
+      state.ufoRoaming = !state.ufoRoaming;
+      
+      const labelEl = document.getElementById('ufo-btn-label');
+      const titleEl = document.getElementById('ufo-status-title');
+      const descEl = document.getElementById('ufo-status-desc');
+
+      if (state.ufoRoaming) {
+        state.ufoPos = { x: 0, y: 10, z: 0 };
+        state.ufoVel = { x: (Math.random() - 0.5) * 1.5, y: 0.2, z: (Math.random() - 0.5) * 1.5 };
+        labelEl.textContent = 'Chamar';
+        titleEl.textContent = 'Sonda em Voo Galáctico';
+        descEl.textContent = 'A navegar em tempo real entre sistemas da Via Láctea...';
+      } else {
+        labelEl.textContent = 'Explorar';
+        titleEl.textContent = 'Sonda SETI Exploratória';
+        descEl.textContent = 'Clique no Alien para lançar a nave de reconhecimento galáctico.';
+      }
+    }
+
+    function swapPanels() {
+      const main = document.getElementById('main-content');
+      const left = document.getElementById('panel-left');
+      const right = document.getElementById('panel-right');
+
+      state.isSwapped = !state.isSwapped;
+
+      if (state.isSwapped) {
+        main.insertBefore(right, left);
+      } else {
+        main.insertBefore(left, right);
+      }
+
+      setTimeout(() => {
+        resize2DCanvas();
+        resize3DRenderer();
+      }, 150);
+    }
+
+    function setupDraggablePanels() {
+      const panels = document.querySelectorAll('.draggable-panel');
+
+      panels.forEach(panel => {
+        const handle = panel.querySelector('.panel-handle');
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        const onStart = (e) => {
+          if (e.target.closest('.no-drag') || e.target.closest('button')) return;
+          isDragging = true;
+          startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+          panel.classList.add('panel-dragging');
+        };
+
+        const onMove = (e) => {
+          if (!isDragging) return;
+          const x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+          currentX = x - startX;
+          panel.style.transform = `translateX(${currentX}px)`;
+        };
+
+        const onEnd = () => {
+          if (!isDragging) return;
+          isDragging = false;
+          panel.classList.remove('panel-dragging');
+          panel.style.transform = '';
+
+          if (Math.abs(currentX) > 60) {
+            swapPanels();
+          }
+          currentX = 0;
+        };
+
+        handle.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+
+        handle.addEventListener('touchstart', onStart, { passive: true });
+        window.addEventListener('touchmove', onMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      });
+    }
+
+    /* ==========================================================================
+       7. FERMI PARADOX 50 SOLUTIONS CENTRAL MODAL & CLOCKWISE ROULETTE LOGIC
+       ========================================================================== */
+    function openSolutionsModal() {
+      state.fsOpen = true;
+      document.body.classList.add('fermi-open');
+      document.getElementById('modal-solutions').classList.remove('hidden');
+      renderSolutionsGalaxy();
+      renderSolutionsList();
+    }
+
+    function closeSolutionsModal() {
+      state.fsOpen = false;
+      document.body.classList.remove('fermi-open');
+      document.getElementById('modal-solutions').classList.add('hidden');
+      closeSideDrawer();
+    }
+
+    function openSideDrawer(hypo) {
+      const drawer = document.getElementById('fs-side-drawer');
+      document.getElementById('drawer-hypo-num').textContent = `HIPÓTESE #${hypo.id < 10 ? '0' + hypo.id : hypo.id}`;
+      document.getElementById('drawer-title').textContent = hypo.title;
+      document.getElementById('drawer-summary').textContent = hypo.sum;
+      document.getElementById('drawer-desc').textContent = hypo.desc;
+
+      const iconBox = document.getElementById('drawer-icon-box');
+      const icon = document.getElementById('drawer-icon');
+
+      const hue = (180 + (hypo.id * 53)) % 360;
+      const colorHSL = `hsl(${hue}, 100%, 65%)`;
+
+      iconBox.style.borderColor = colorHSL;
+      iconBox.style.background = 'rgba(6, 12, 28, 0.95)';
+      iconBox.style.boxShadow = `0 0 25px ${colorHSL}70`;
+      icon.className = `fa-solid fa-${hypo.ic}`;
+      icon.style.color = colorHSL;
+
+      drawer.classList.remove('translate-x-full');
+    }
+
+    function closeSideDrawer() {
+      const drawer = document.getElementById('fs-side-drawer');
+      if (drawer) drawer.classList.add('translate-x-full');
+
+      state.selectedSolution = null;
+      
+
+    }
+
+    function renderSolutionsGalaxy() {
+      const container = document.getElementById('fs-cards-container');
+      const svg = document.getElementById('fs-roulette-sectors');
+      container.innerHTML = '';
+      svg.innerHTML = '';
+      const step = 2 * Math.PI / FS_DATA.length;
+      const ns = 'http://www.w3.org/2000/svg';
+
+      FS_DATA.forEach((hypo, idx) => {
+        const a0 = -Math.PI / 2 + idx * step;
+        const a1 = a0 + step;
+        const x0 = 300 + 299 * Math.cos(a0);
+        const y0 = 300 + 299 * Math.sin(a0);
+        const x1 = 300 + 299 * Math.cos(a1);
+        const y1 = 300 + 299 * Math.sin(a1);
+        const sector = document.createElementNS(ns, 'path');
+        sector.setAttribute('d', `M 300 300 L ${x0} ${y0} A 299 299 0 0 1 ${x1} ${y1} Z`);
+        sector.setAttribute('fill', idx % 2 ? '#10243a' : '#1b1232');
+        sector.setAttribute('stroke', idx % 2 ? '#00f0ff' : '#ff007f');
+        sector.setAttribute('stroke-opacity', '0.7');
+        sector.setAttribute('stroke-width', '1');
+        svg.appendChild(sector);
+
+        const angle = a0 + step / 2;
+        const symbol = document.createElement('div');
+        symbol.className = 'roulette-symbol';
+        symbol.style.left = `${50 + 40 * Math.cos(angle)}%`;
+        symbol.style.top = `${50 + 40 * Math.sin(angle)}%`;
+        symbol.title = `#${hypo.id} — ${hypo.title}`;
+        symbol.setAttribute('role', 'button');
+        symbol.setAttribute('tabindex', '0');
+        symbol.setAttribute('aria-label', symbol.title);
+        symbol.innerHTML = `<i class="fa-solid fa-${hypo.ic}"></i><span>${hypo.id}</span>`;
+        symbol.onclick = () => { if (!state.isProbing) selectSolution(hypo.id); };
+        symbol.onkeydown = (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            symbol.click();
+          }
+        };
+        container.appendChild(symbol);
+      });
+      updateGalaxyCardsPosition();
+    }
+
+    function updateGalaxyCardsPosition() {
+      const wheel = document.getElementById('fs-roulette-wheel');
+      if (wheel) wheel.style.transform = `rotate(${state.fsRot}deg)`;
+    }
+
+    function renderSolutionsList() {
+      const grid = document.getElementById('fs-list-grid');
+      grid.innerHTML = '';
+
+      FS_DATA.forEach((hypo, idx) => {
+        const hue = (180 + (idx * 53)) % 360;
+        const colorHSL = `hsl(${hue}, 100%, 65%)`;
+
+        const item = document.createElement('div');
+        item.className = 'glass-card p-3 rounded-xl border border-slate-800 hover:border-cyan-400 cursor-pointer transition-all flex items-center space-x-3 group bg-slate-950/90 hover:shadow-neon-cyan';
+        item.onclick = () => selectSolution(hypo.id);
+
+        item.innerHTML = `
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg border-2 shrink-0 shadow-md" style="background: rgba(6,12,28,0.9); border-color: ${colorHSL}; color: ${colorHSL}; box-shadow: 0 0 12px ${colorHSL}50">
+            <i class="fa-solid fa-${hypo.ic}"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center space-x-2">
+              <span class="font-orbitron text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-900 border text-slate-300" style="border-color: ${colorHSL}60">
+                #${hypo.id < 10 ? '0' + hypo.id : hypo.id}
+              </span>
+              <h4 class="font-orbitron text-xs font-bold text-slate-100 group-hover:text-cyan-300 truncate">
+                ${hypo.title}
+              </h4>
+            </div>
+            <p class="text-[11px] text-slate-400 truncate mt-0.5">
+              ${hypo.sum}
+            </p>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function selectSolution(id) {
+      const hypo = FS_DATA.find(h => h.id === id);
+      if (!hypo) return;
+
+      state.selectedSolution = hypo;
+      openSideDrawer(hypo);
+    }
+
+    function probeRandomSolution() {
+      if (state.isProbing) return;
+      state.isProbing = true;
+      closeSideDrawer();
+      if (state.fsMode === 'list') document.getElementById('btn-fs-mode-galaxy').click();
+
+      const btn = document.getElementById('btn-probe-random');
+      const btnText = document.getElementById('btn-probe-text');
+      btnText.textContent = 'A rodar...';
+      btn.disabled = true;
+
+      const randomIdx = Math.floor(Math.random() * FS_DATA.length);
+      const step = 360 / FS_DATA.length;
+      const current = ((state.fsRot % 360) + 360) % 360;
+      const landing = ((-step * (randomIdx + 0.5) % 360) + 360) % 360;
+      const delta = (landing - current + 360) % 360;
+      const startRot = state.fsRot;
+      const targetRot = startRot + 360 * 6 + delta;
+      const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 350 : 4800;
+      const startTime = performance.now();
+
+      function animateProbe(time) {
+        const progress = Math.min(1, (time - startTime) / duration);
+        // A fast clockwise start gradually slows to a complete stop on the chosen sector.
+        const eased = 1 - Math.pow(1 - progress, 4);
+        state.fsRot = startRot + (targetRot - startRot) * eased;
+        updateGalaxyCardsPosition();
+        if (progress < 1 && state.fsOpen) {
+          requestAnimationFrame(animateProbe);
+        } else {
+          state.fsRot = targetRot;
+          updateGalaxyCardsPosition();
+          state.isProbing = false;
+          btnText.textContent = 'Rodar Roleta';
+          btn.disabled = false;
+          if (state.fsOpen) selectSolution(FS_DATA[randomIdx].id);
+        }
+      }
+      requestAnimationFrame(animateProbe);
+    }
+
+    /* ==========================================================================
+       8. ANIMATION LOOP & EVENT LISTENERS INITIALIZATION
+       ========================================================================== */
+    function triggerGalaxyUpdate() {
+      generateCivilizationsData();
+      update3DCivilizations();
+    }
+
+    let lastTime = 0;
+    function mainAnimationLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      updateUFOPhysics();
+
+      // 1. Render 2D Canvas Galaxy
+      render2D();
+
+      // 2. Render 3D Three.js Galaxy
+      render3D();
+
+
+      requestAnimationFrame(mainAnimationLoop);
+    }
+
+    window.onload = function() {
+      // 1. Render Controls & Initial Calculations
+      renderDrakeControls();
+      calculateDrake();
+
+      // 2. Initialize 2D Canvas Engine
+      init2DCanvas();
+      generateCivilizationsData();
+
+      // 3. Initialize 3D Three.js Engine
+      init3DThree();
+
+      // 4. Setup Draggable Panels
+      setupDraggablePanels();
+
+      // Note: The central solutions modal is now hidden by default on app start.
+      // It opens only when clicking the "Base de Soluções" button.
+
+      // Modal Toggle Event Handlers
+      document.getElementById('btn-open-modal').onclick = openSolutionsModal;
+      document.getElementById('btn-close-modal').onclick = closeSolutionsModal;
+      document.getElementById('modal-backdrop').onclick = closeSolutionsModal;
+      document.getElementById('btn-close-drawer').onclick = closeSideDrawer;
+
+      // Swap and Reset Buttons
+      document.getElementById('btn-swap-panels').onclick = swapPanels;
+      document.getElementById('btn-reset-drake').onclick = () => {
+        state.drake = { R: 2.0, fp: 0.80, ne: 1.0, fl: 0.50, fi: 0.20, fc: 0.20, L: 10000 };
+        renderDrakeControls();
+        calculateDrake();
+      };
+
+      // UFO Launch Events
+      document.getElementById('ufo-alien-avatar').onclick = toggleUFORoaming;
+      document.getElementById('btn-ufo-toggle').onclick = toggleUFORoaming;
+
+      // 2D / 3D Mode Toggle Events
+      const btn2D = document.getElementById('btn-mode-2d');
+      const btn3D = document.getElementById('btn-mode-3d');
+      const c2D = document.getElementById('galaxy-canvas-2d');
+      const c3D = document.getElementById('galaxy-container-3d');
+      const autoRotateBtn = document.getElementById('btn-auto-rotate-3d');
+
+      btn2D.onclick = () => {
+        state.mode3D = false;
+        c2D.classList.remove('hidden');
+        c3D.classList.add('hidden');
+        autoRotateBtn.classList.add('hidden');
+        btn2D.className = 'px-3 py-1 rounded-md text-slate-950 font-bold bg-cyan-400 transition-all shadow-neon-cyan';
+        btn3D.className = 'px-3 py-1 rounded-md text-slate-400 hover:text-cyan-300 transition-all';
+        resize2DCanvas();
+      };
+
+      btn3D.onclick = () => {
+        state.mode3D = true;
+        c2D.classList.add('hidden');
+        c3D.classList.remove('hidden');
+        autoRotateBtn.classList.remove('hidden');
+        btn3D.className = 'px-3 py-1 rounded-md text-slate-950 font-bold bg-cyan-400 transition-all shadow-neon-cyan';
+        btn2D.className = 'px-3 py-1 rounded-md text-slate-400 hover:text-cyan-300 transition-all';
+        resize3DRenderer();
+      };
+
+      // Fullscreen Solutions Mode Toggle (Galaxy vs List)
+      document.getElementById('btn-fs-mode-galaxy').onclick = () => {
+        state.fsMode = 'galaxy';
+        document.getElementById('fs-galaxy-view').classList.remove('hidden');
+        document.getElementById('fs-list-view').classList.add('hidden');
+        document.getElementById('btn-fs-mode-galaxy').className = 'px-3 py-1.5 rounded-lg text-slate-950 font-black bg-gradient-to-r from-cyan-400 to-teal-300 transition-all shadow-neon-cyan flex items-center space-x-1.5';
+        document.getElementById('btn-fs-mode-list').className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-cyan-300 transition-all flex items-center space-x-1.5';
+      };
+
+      document.getElementById('btn-fs-mode-list').onclick = () => {
+        state.fsMode = 'list';
+        document.getElementById('fs-galaxy-view').classList.add('hidden');
+        document.getElementById('fs-list-view').classList.remove('hidden');
+        document.getElementById('btn-fs-mode-list').className = 'px-3 py-1.5 rounded-lg text-slate-950 font-black bg-gradient-to-r from-cyan-400 to-teal-300 transition-all shadow-neon-cyan flex items-center space-x-1.5';
+        document.getElementById('btn-fs-mode-galaxy').className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-cyan-300 transition-all flex items-center space-x-1.5';
+      };
+
+      // Probe Random Solution Button
+      document.getElementById('btn-probe-random').onclick = probeRandomSolution;
+      document.getElementById('btn-drawer-next').onclick = probeRandomSolution;
+
+      // Handle Resize
+      window.addEventListener('resize', () => {
+        resize2DCanvas();
+        resize3DRenderer();
+      });
+
+      // Start main animation loop
+      requestAnimationFrame(mainAnimationLoop);
+    };
+  </script>
+</body>
+</html>

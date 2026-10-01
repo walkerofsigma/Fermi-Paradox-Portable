@@ -1,0 +1,14 @@
+{
+"name": "alpha-fermi-paradox",
+"version": "1.0.0",
+"description": "O Paradoxo de Fermi & Equacao de Drake Portable App",
+"main": "main.js",
+"scripts": {
+"start": "electron .",
+"build": "electron-builder --win portable"
+},
+"devDependencies": {
+"electron": "^28.2.0",
+"electron-builder": "^24.9.1"
+}
+}
